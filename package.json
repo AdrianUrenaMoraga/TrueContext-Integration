@@ -1,0 +1,17 @@
+{
+  "name": "truecontextintegration",
+  "version": "0.0.1",
+  "description": "Initialziation Integration TrueContext HubSpot",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Adrian Ureña Moraga",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "form-data": "^4.0.1"
+  }
+}
