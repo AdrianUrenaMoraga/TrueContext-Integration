@@ -5,7 +5,7 @@ import { hubspotAPI, hubspotAPIFile } from './hubspotapi.js';
 import { getForms, getFormsById, getFormSubmision, getFormSubmisionById, getUserById, getFormSubmisionByIdFull } from './truecontext.js';
 import { searchByLabel, extractLabelsToObject, logWithTimestamp, logErrorWithTimestamp } from '../utils/util.js';
 
-export async function createOrUpdateContactInHubSpot(userId, Form) {
+export async function createOrUpdateContactInHubSpot( userId, Form ) {
     try {   
         const hubspotContact = await searchContactByIdForm(userId);
         const user = await getUserById(Form.userId);
@@ -22,7 +22,7 @@ export async function createOrUpdateContactInHubSpot(userId, Form) {
     }
 }
 
-export async function createOrUpdateGestionVisitaInHubSpot(visita) {
+export async function createOrUpdateGestionVisitaInHubSpot( visita ) {
     try {
         const visitaId = await searchGestionVisitaByIdForm(visita.identifier);
         const dataVisita = await getFormSubmisionByIdFull(visita.identifier);
@@ -30,7 +30,7 @@ export async function createOrUpdateGestionVisitaInHubSpot(visita) {
 
         //console.log("dataVisita: ",dataVisita);
         const data = await extractLabelsToObject(dataVisita, ['name','referencia','Asesor','TipoVisita','TipoProspecto',
-            'NombreProspecto','Acompañamiento','ConcretoLaVisita','ConQuienAgendoVisita','TipoDeCliente','CompraAOtroLab',
+            'NombreProspecto','ProspectoLista','Acompañamiento','ConcretoLaVisita','ConQuienAgendoVisita','TipoDeCliente','CompraAOtroLab',
             'TipoDeProductos','Especialidad','EnfoqueNegocio','ComentariosOpcionale','EvidenciaVisita','NivelDeInteresVisita',
             'GerenteRegional','NoClienteMedico','NombreDelCliente','AliasDelCliente','BusquedaPorNombre','ObjetivoDeLaVisita']);
 
@@ -85,6 +85,26 @@ export async function createOrUpdateCompanyInHubSpot( companyIds, companyData ) 
     } catch (error) {
         logErrorWithTimestamp(error);
        //console.error('Unexpected error in createOrUpdateCompanyInHubSpot:', error.message);
+        return null;
+    }
+}
+
+export async function createOrUpdateCompanyProspectoInHubSpot( companyName, companyData ) {
+    try {
+        //console.log("Prospecto Despues: ", companyData);
+        logWithTimestamp(`searching company prospecto Name: ${companyName} `);
+        const company = await searchCompanyByName( companyName );
+        //console.log("companyData: ",companyData);
+        if (company) {
+            logWithTimestamp(`company prospecto found with name: ${companyName} `);
+            return await updateCompanyProspectoInHubSpot( company, companyData, companyName );
+        } else {
+            logWithTimestamp(`company prospecto not found with name: ${companyName} `);
+            return await createCompanyProspectoInHubSpot( companyData );
+        }
+    } catch (error) {
+        logErrorWithTimestamp(error);
+        console.error('Unexpected error in createOrUpdateCompanyProspectoInHubSpot:', error.message);
         return null;
     }
 }
@@ -215,39 +235,44 @@ async function createContactInHubSpot( contact ) {
     }
 }
 
-async function searchGestionVisitaByIdForm( idVisita ) {
-    try {
-        const response = await hubspotAPI.post('/crm/v3/objects/p44437320_gestion_visitas/search', {
-            filterGroups: [
-                {
-                    filters: [
-                        {
-                            propertyName: 'identificador',
-                            operator: 'EQ',
-                            value: idVisita,
-                        },
-                    ],
-                },
-            ],
-            properties: ['identificador'], // Specify properties to retrieve
-        });
+async function searchGestionVisitaByIdForm(idVisita, maxRetries = 10) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await hubspotAPI.post('/crm/v3/objects/p44437320_gestion_visitas/search', {
+                filterGroups: [
+                    {
+                        filters: [
+                            {
+                                propertyName: 'identifier',
+                                operator: 'EQ',
+                                value: idVisita,
+                            },
+                        ],
+                    },
+                ],
+                properties: ['identifier'], // Specify properties to retrieve
+            });
 
-        if (response.data.total > 0) {
-            logWithTimestamp(`Visita found for id_form ${idVisita}`);
-            return response.data.results[0]; // Return the first matching deal
+            if (response.data.total > 0) {
+                logWithTimestamp(`Visita found for id_form ${idVisita} on attempt ${attempt}`);
+                return response.data.results[0]; // Return the first matching result
+            }
+
+            logWithTimestamp(`No Visita found for id_form ${idVisita} on attempt ${attempt}`);
+        } catch (error) {
+            logErrorWithTimestamp(`Attempt ${attempt} failed: ${error.message}`);
         }
-        logWithTimestamp(`No Visita found for id_form ${idVisita}`);
-        return null;
-    } catch (error) {
-        logErrorWithTimestamp(error);
-        //console.error(`Error searching deal by id_form ${idVisita}:`, error.response ? error.response.data : error.message);
-        throw error;
     }
+
+    logWithTimestamp(`Failed to find Visita for id_form ${idVisita} after ${maxRetries} attempts.`);
+    return null;
 }
 
-async function createGestionVisitaInHubSpot( visitaData, User ) {
+
+async function createGestionVisitaInHubSpot( visitaData, User , maxRetries = 10, delay = 1000 ) {
     const payload = {
         properties: {
+            identifier: visitaData["identifier"] || "",
             //Cliente
             no_cliente: visitaData["NoClienteMedico"] || "",
             cliente_alias: visitaData["AliasDelCliente"] || "",
@@ -287,18 +312,51 @@ async function createGestionVisitaInHubSpot( visitaData, User ) {
             gerente__regional: visitaData["GerenteRegional"] || "",     
         }
     };
+try {
+        // Step 1: Create the custom object
+        const createResponse = await hubspotAPI.post('/crm/v3/objects/p44437320_gestion_visitas', payload);
+        const createdObjectId = createResponse.data.id;
 
-    try {
-        const response = await hubspotAPI.post('/crm/v3/objects/p44437320_gestion_visitas', payload);
+        logWithTimestamp(`Visita created in HubSpot: ${createdObjectId}`);
 
-        logWithTimestamp(`Visita created in HubSpot: ${response.data.id}`);
+        // Step 2: Attempt to search for the created object
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const searchResponse = await hubspotAPI.post('/crm/v3/objects/p44437320_gestion_visitas/search', {
+                    filterGroups: [
+                        {
+                            filters: [
+                                {
+                                    propertyName: 'identifier', // Use the unique identifier property
+                                    operator: 'EQ',
+                                    value: payload.properties.identifier, // Match the identifier used in creation
+                                },
+                            ],
+                        },
+                    ],
+                    properties: ['identifier'], // Specify properties to retrieve
+                });
 
-        return response.data;
-    } catch (error) {
-        const responseError = error.response ? error.response.data : { message: error.message };
-        logErrorWithTimestamp(error);
-        //console.error('Error creating Visita in HubSpot:', responseError);
+                if (searchResponse.data.total > 0) {
+                    logWithTimestamp(`Visita found in HubSpot on attempt ${attempt}`);
+                    break;
+                }
 
+                logWithTimestamp(`Attempt ${attempt}: Visita not yet indexed. Retrying...`);
+            } catch (searchError) {
+                logErrorWithTimestamp(`Attempt ${attempt} failed: ${searchError.message}`);
+            }
+
+            // Wait before retrying
+            if (attempt < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+
+        //logWithTimestamp(`Failed to find the created Visita after ${maxRetries} attempts.`);
+        return createResponse.data
+    } catch (createError) {
+        logErrorWithTimestamp(`Error creating Visita in HubSpot: ${createError.message}`);
         return null;
     }
 }
@@ -307,6 +365,7 @@ async function updateGestionVisitaInHubSpot( visitaId, visitaData, User ) {
     try {
         const payload = {
             properties: {
+            identifier: visitaData["identifier"] || "",
             //Cliente
             no_cliente: visitaData["NoClienteMedico"] || "",
             cliente_alias: visitaData["AliasDelCliente"] || "",
@@ -324,7 +383,7 @@ async function updateGestionVisitaInHubSpot( visitaId, visitaData, User ) {
             //Ubicacion 
             direccion: visitaData["direccion"] || "",
             coordenadas: visitaData["coordenadas"] || "",
-            identificador: visitaData["identifier"] || "",
+            identificador: visitaData["name"] || "",
             evidencia_visita: visitaData["EvidenciaVisita"] || "",
             //Anotacion
             comentarios: visitaData["ComentariosOpcionale"] || "",
@@ -495,6 +554,50 @@ async function searchCompanyByIdCliente(idCliente, maxRetries = 2, delay = 500) 
     return null; // After all retries, return null if no company is found
 }
 
+async function searchCompanyByName(name, maxRetries = 6, delay = 500) {
+    if (name === null || name === "") {
+        console.log("null name for company");
+        return null;
+    }
+
+    const payload = {
+        filterGroups: [
+            {
+                filters: [
+                    {
+                        propertyName: 'name',
+                        operator: 'EQ',
+                        value: name,
+                    },
+                ],
+            },
+        ],
+        properties: ['name', 'no__medico', 'sap_id'],
+    };
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await hubspotAPI.post('/crm/v3/objects/companies/search', payload);
+
+            if (response.data.results.length > 0) {
+                const company = response.data.results[0];
+                logWithTimestamp(`Company found with name: ${name} on attempt ${attempt}`);
+                return company.id;
+            } else {
+                logWithTimestamp(`No company found with name: ${name} on attempt ${attempt}`);
+            }
+
+            if (attempt < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, delay * attempt)); // Exponential backoff
+            }
+        } catch (error) {
+            logErrorWithTimestamp(error);
+            return null;
+        }
+    }
+
+    return null; // After all retries, return null if no company is found
+}
 
 async function createCompanyInHubSpot( companyData ) {
     const payload = {
@@ -525,6 +628,42 @@ async function updateCompanyInHubSpot( companyId, companyData ) {
     try {
         const response = await hubspotAPI.patch(`/crm/v3/objects/companies/${companyId}`, payload);
         logWithTimestamp(`Company updated in HubSpot: ${companyId}`);
+        return response.data;
+    } catch (error) {
+        const responseError = error.response ? error.response.data : { message: error.message };
+        logErrorWithTimestamp(error);
+        //console.error(`Error updating company in HubSpot (ID: ${companyId}):`, responseError);
+        return null;
+    }
+}
+
+async function createCompanyProspectoInHubSpot( companyData, companyName ) {
+    const payload = {
+        properties: {
+            name: companyName || ''
+        }
+    };
+    try {
+        const response = await hubspotAPI.post('/crm/v3/objects/companies', payload);
+        logWithTimestamp(`Company Prospecto created in HubSpot: ${response.data.id}`);
+        return response.data;
+    } catch (error) {
+        const responseError = error.response ? error.response.data : { message: error.message };
+        logErrorWithTimestamp(error);
+        //console.error('Error creating company in HubSpot:', responseError);
+        return null;
+    }
+}
+
+async function updateCompanyProspectoInHubSpot( companyId, companyData, companyName ) {
+    const payload = {
+        properties: {
+            name: companyName || '',
+        }
+    };
+    try {
+        const response = await hubspotAPI.patch(`/crm/v3/objects/companies/${companyId}`, payload);
+        logWithTimestamp(`Company Prospecto updated in HubSpot: ${companyId}`);
         return response.data;
     } catch (error) {
         const responseError = error.response ? error.response.data : { message: error.message };
@@ -646,12 +785,12 @@ export async function uploadFileFromBytes(data) {
   try {
     // Decode the base64-encoded file into a Buffer
     const buffer = Buffer.from(data.bytes, "base64");
-
+    const nameWithoutExtension = data.filename.split('.').slice(0, -1).join('.');
     // Write the file to the project folder
     // Prepare the multipart form-data
     const form = new FormData();
     const json = JSON.stringify({access: "PRIVATE", overwrite: true});
-    form.append("file", buffer, { filename: data.filename }); // Add file data
+    form.append("file", buffer, { filename: `${nameWithoutExtension}_${data.identifier}.jpeg` }); // Add file data
     form.append("folderPath", "/TrueContext"); // Replace with your folder path
     //console.log("json: ",json);
     form.append(
@@ -676,6 +815,48 @@ export async function uploadFileFromBytes(data) {
     return null;
   }
 }
+
+export async function getImageProof(data) {
+
+    image = await searchImageByNameInHubSpot(data.filename);
+
+    if (image) {
+        console.log(`Image found:`, JSON.stringify(image));
+       return image.url;
+    }else{
+        return await uploadFileFromBytes(data);
+    }
+}
+
+async function searchImageByNameInHubSpot(imageName) {
+    let foundFile = null;
+    let nextPage = '/files/v3/files';
+    console.log("imageName: ",imageName);
+    while (nextPage) {
+        try {
+            const response = await hubspotAPI.get(nextPage);
+            foundFile = response.data.results.find(file => file.name === imageName);
+
+            if (foundFile) {
+                console.log(`Image found:`, foundFile);
+                return foundFile;
+            }
+
+            nextPage = response.data.paging?.next?.link || null;
+        } catch (error) {
+            console.error(
+                `Error searching image in HubSpot:`,
+                error.response?.data || error.message
+            );
+            return null;
+        }
+    }
+
+    console.log(`Image not found: ${imageName}`);
+    return null;
+}
+
+
 
 function convertToMidnightUTC(dateString) {
     const date = new Date(dateString);

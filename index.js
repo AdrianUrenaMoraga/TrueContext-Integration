@@ -1,14 +1,16 @@
 import 'dotenv/config';
 import { getForms, getFormsById, getFormSubmision, getFormSubmisionById, getUserById, getFormSubmisionByIdFull } from './api/truecontext.js';
-import { createOrUpdateContactInHubSpot, createOrUpdateCompanyInHubSpot, createOrUpdateGestionVisitaInHubSpot, associateGestionVisitaWithContact, associateGestionVisitaWithCompany} from './api/hubspot.js';
-import {getFirstAndLastDateOfCurrentMonth, logWithTimestamp, logErrorWithTimestamp} from './utils/util.js';
+import { createOrUpdateContactInHubSpot, createOrUpdateCompanyInHubSpot, 
+    createOrUpdateGestionVisitaInHubSpot, associateGestionVisitaWithContact, 
+    associateGestionVisitaWithCompany, createOrUpdateCompanyProspectoInHubSpot} from './api/hubspot.js';
+import {getFirstAndLastDateOfCurrentMonth, logWithTimestamp, logErrorWithTimestamp, getCompanyName} from './utils/util.js';
 (async()=> {
     
 try{
     //const { firstDate, lastDate } = getFirstAndLastDateOfCurrentMonth();
 
-    const firstDate = "2025-01-13T00:00:00.000Z";
-    const lastDate = "2025-01-13T23:59:59.999Z";
+    const firstDate = "2025-01-24T00:00:00.000Z";
+    const lastDate = "2025-01-24T23:59:59.999Z";
 
     //console.log('First Date:', firstDate);
     //console.log('Last Date:', lastDate);
@@ -32,15 +34,33 @@ try{
             logWithTimestamp(`No matching contact found for gestion visita id_cliente: ${form.formId}`);
         }
         */
-       if(data["NoClienteMedico"] !== "" && data["BusquedaPorNombre"] !== ""){
-            const hubspotCompany = await createOrUpdateCompanyInHubSpot( data["NoClienteMedico"] , data );
-            if (hubspotCompany) {
-                logWithTimestamp(`Associating gestion visita ${hubspotVisita.id} with company ${hubspotCompany.id}`);
-                await associateGestionVisitaWithCompany(hubspotVisita.id, hubspotCompany.id);
-            } else {
-                logWithTimestamp(`No Medic number or Medic name given for form: ${form.formId}`);
+       //console.log('Prospecto antes: ', hubspotVisita);
+       if (hubspotVisita.id) {
+            if(data["NoClienteMedico"] !== "" && data["BusquedaPorNombre"] !== ""){
+                const hubspotCompany = await createOrUpdateCompanyInHubSpot( data["NoClienteMedico"] , data );
+                if (hubspotCompany) {
+                    logWithTimestamp(`Associating gestion visita ${hubspotVisita.id} with company ${hubspotCompany.id}`);
+                    await associateGestionVisitaWithCompany(hubspotVisita.id, hubspotCompany.id);
+                } else {
+                    logWithTimestamp(`No Medic number or Medic name given for form: ${form.formId}`);
+                }
             }
-       }
+       
+            if((data["ProspectoLista"] !== '' && data["ProspectoLista"] !== null) || (data["NombreProspecto"] !== '' && data["NombreProspecto"] !== null)
+            || ((data["BusquedaPorNombre"] !== '' && data["BusquedaPorNombre"] !== null) && (data["NombreDelCliente"] === '' || data["NombreDelCliente"] === null))){
+                console.log('Prospecto despues: ', data);  
+                const name = getCompanyName(data);
+                if(name){
+                    const hubspotCompany = await createOrUpdateCompanyProspectoInHubSpot( name , data );
+                    if (hubspotCompany) {
+                        logWithTimestamp(`Associating gestion visita ${hubspotVisita.id} with company ${hubspotCompany.id}`);
+                        await associateGestionVisitaWithCompany(hubspotVisita.id, hubspotCompany.id);
+                    } else {
+                        logWithTimestamp(`No Medic number or Medic name given for form: ${form.formId}`);
+                    }     
+                }
+            }
+        }
     }
     console.log('All Forms Processed');
 }catch (error) {

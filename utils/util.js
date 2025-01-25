@@ -1,4 +1,4 @@
-import { uploadFileFromBytes } from "../api/hubspot.js";
+import { getImageProof, uploadFileFromBytes } from "../api/hubspot.js";
 
 export const logWithTimestamp = (message) => {
     const now = new Date().toISOString();
@@ -51,6 +51,21 @@ export const searchByLabel = (data, label) => {
     return null; // Return null if not found
 };
 
+export const getCompanyName = (data) => {
+    let name = "";
+    if(data["ProspectoLista"] !== ""){
+        name = data["ProspectoLista"];
+    } else if (data["BusquedaPorNombre"] !== ""){
+        name = data["BusquedaPorNombre"];
+    } else if (data["NombreProspecto"] !== ""){
+        name = data["NombreProspecto"];
+    }else{
+        name = "";
+    }
+    return name;
+};
+
+
 export const extractLabelsToObject = async ( data, labels ) => {
     const resultObject = {};
     let result = {};
@@ -76,6 +91,8 @@ export const extractLabelsToObject = async ( data, labels ) => {
             } else if(label === 'Especialidad'){
                 resultObject[label] = result.values[0] || "";  
             } else if(label === 'NombreProspecto'){
+                resultObject[label] = result.values[0] || "";  
+            } else if(label === 'ProspectoLista'){
                 resultObject[label] = result.values[0] || "";  
             } else if(label === 'Acompañamiento'){
                 resultObject[label] = result.values[0] || "";  
