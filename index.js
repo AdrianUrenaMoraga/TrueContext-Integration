@@ -9,11 +9,11 @@ import {getFirstAndLastDateOfCurrentMonth, logWithTimestamp, logErrorWithTimesta
 try{
     //const { firstDate, lastDate } = getFirstAndLastDateOfCurrentMonth();
 
-    const firstDate = "2025-01-24T00:00:00.000Z";
-    const lastDate = "2025-01-24T23:59:59.999Z";
+    //const firstDate = "2025-01-11T00:00:00.000Z";
+    //const lastDate = "2025-01-11T23:59:59.999Z";
 
-    //console.log('First Date:', firstDate);
-    //console.log('Last Date:', lastDate);
+    console.log('First Date:', firstDate);
+    console.log('Last Date:', lastDate);
     
     const forms = await getFormSubmision( 1910671007, firstDate, lastDate );
     //console.log('Forms:', forms);

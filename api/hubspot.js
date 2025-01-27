@@ -621,7 +621,7 @@ async function createCompanyInHubSpot( companyData ) {
 async function updateCompanyInHubSpot( companyId, companyData ) {
     const payload = {
         properties: {
-            name: companyData["BusquedaPorNombre"] || '',
+            //name: companyData["BusquedaPorNombre"] || '',
             sap_id:companyData["NoClienteMedico"] || '',
         }
     };
