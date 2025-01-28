@@ -26,6 +26,11 @@ export const getFirstAndLastDateOfCurrentMonth = () => {
     return { firstDate, lastDate };
 };
 
+export const getDay = () => {
+    const now = new Date();
+    return now.toISOString().split('T')[0];
+}
+
 export const searchByLabel = (data, label) => {
     if (!data || typeof data !== "object") return null;
 

@@ -3,7 +3,7 @@ import { getForms, getFormsById, getFormSubmision, getFormSubmisionById, getUser
 import { createOrUpdateContactInHubSpot, createOrUpdateCompanyInHubSpot, 
     createOrUpdateGestionVisitaInHubSpot, associateGestionVisitaWithContact, 
     associateGestionVisitaWithCompany, createOrUpdateCompanyProspectoInHubSpot} from './api/hubspot.js';
-import {getFirstAndLastDateOfCurrentMonth, logWithTimestamp, logErrorWithTimestamp, getCompanyName} from './utils/util.js';
+import {getFirstAndLastDateOfCurrentMonth, logWithTimestamp, logErrorWithTimestamp, getCompanyName, getDay} from './utils/util.js';
 (async()=> {
     
 try{
@@ -11,6 +11,10 @@ try{
 
     //const firstDate = "2025-01-11T00:00:00.000Z";
     //const lastDate = "2025-01-11T23:59:59.999Z";
+    const date = getDay();
+
+    const firstDate = `${date}T00:00:00.000Z`;
+    const lastDate = `${date}T23:59:59.999Z`;
 
     console.log('First Date:', firstDate);
     console.log('Last Date:', lastDate);
@@ -48,7 +52,7 @@ try{
        
             if((data["ProspectoLista"] !== '' && data["ProspectoLista"] !== null) || (data["NombreProspecto"] !== '' && data["NombreProspecto"] !== null)
             || ((data["BusquedaPorNombre"] !== '' && data["BusquedaPorNombre"] !== null) && (data["NombreDelCliente"] === '' || data["NombreDelCliente"] === null))){
-                console.log('Prospecto despues: ', data);  
+                //console.log('Prospecto despues: ', data);  
                 const name = getCompanyName(data);
                 if(name){
                     const hubspotCompany = await createOrUpdateCompanyProspectoInHubSpot( name , data );
