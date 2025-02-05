@@ -658,7 +658,7 @@ async function createCompanyProspectoInHubSpot( companyData, companyName ) {
 async function updateCompanyProspectoInHubSpot( companyId, companyData, companyName ) {
     const payload = {
         properties: {
-            name: companyName || '',
+            //name: companyName || '',
         }
     };
     try {

@@ -49,7 +49,7 @@ try{
                     logWithTimestamp(`No Medic number or Medic name given for form: ${form.formId}`);
                 }
             }
-       
+            /*
             if((data["ProspectoLista"] !== '' && data["ProspectoLista"] !== null) || (data["NombreProspecto"] !== '' && data["NombreProspecto"] !== null)
             || ((data["BusquedaPorNombre"] !== '' && data["BusquedaPorNombre"] !== null) && (data["NombreDelCliente"] === '' || data["NombreDelCliente"] === null))){
                 //console.log('Prospecto despues: ', data);  
@@ -63,7 +63,7 @@ try{
                         logWithTimestamp(`No Medic number or Medic name given for form: ${form.formId}`);
                     }     
                 }
-            }
+            }*/
         }
     }
     console.log('All Forms Processed');
