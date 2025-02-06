@@ -80,7 +80,8 @@ export async function createOrUpdateCompanyInHubSpot( companyIds, companyData ) 
             return await updateCompanyInHubSpot( companyId, companyData );
         } else {
             logWithTimestamp(`company not found with id: ${companyIds} `);
-            return await createCompanyInHubSpot( companyData );
+            //return await createCompanyInHubSpot( companyData );
+            return null;
         }
     } catch (error) {
         logErrorWithTimestamp(error);
