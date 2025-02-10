@@ -9,13 +9,13 @@ import {getFirstAndLastDateOfCurrentMonth, logWithTimestamp, logErrorWithTimesta
 try{
     //const { firstDate, lastDate } = getFirstAndLastDateOfCurrentMonth();
 
-    //const firstDate = "2025-01-11T00:00:00.000Z";
-    //const lastDate = "2025-01-11T23:59:59.999Z";
+    const firstDate = "2024-02-16T00:00:00.000Z";
+    const lastDate = "2024-02-20T23:59:59.999Z";
     const date = getDay();
-
+    /*
     const firstDate = `${date}T00:00:00.000Z`;
     const lastDate = `${date}T23:59:59.999Z`;
-
+    */
     console.log('First Date:', firstDate);
     console.log('Last Date:', lastDate);
     
@@ -40,7 +40,7 @@ try{
         */
        //console.log('Prospecto antes: ', hubspotVisita);
        if (hubspotVisita.id) {
-            if(data["NoClienteMedico"] !== "" && data["BusquedaPorNombre"] !== ""){
+            if((data["NoClienteMedico"] !== "" && data["BusquedaPorNombre"] !== "") || (data["NoClienteMedico"] !== "" && data["NombreDelCliente"] !== "")){
                 const hubspotCompany = await createOrUpdateCompanyInHubSpot( data["NoClienteMedico"] , data );
                 if (hubspotCompany) {
                     logWithTimestamp(`Associating gestion visita ${hubspotVisita.id} with company ${hubspotCompany.id}`);

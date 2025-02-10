@@ -130,7 +130,7 @@ export const extractLabelsToObject = async ( data, labels ) => {
     }
     resultObject["Fecha"] = data.geoStamp?.captureTimestamp?.provided?.time || "";
     resultObject["identifier"] = data.identifier || "";
-    resultObject["direccion"] = data.geoStamp.address || "";
+    resultObject["direccion"] = data.geoStamp?.address || "";
     resultObject["name"] = data.name || "";
     resultObject["referencia"] = data.referenceNumber || "";
 
