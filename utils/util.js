@@ -31,6 +31,19 @@ export const getDay = () => {
     return now.toISOString().split('T')[0];
 }
 
+export const getDayAndPrevious = () => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // Today's date
+
+    // Get yesterday's date
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const previousDay = yesterday.toISOString().split('T')[0]; // Previous day's date
+
+    return { today, previousDay };
+};
+
+
 export const searchByLabel = (data, label) => {
     if (!data || typeof data !== "object") return null;
 

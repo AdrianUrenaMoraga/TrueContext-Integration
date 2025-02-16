@@ -3,19 +3,21 @@ import { getForms, getFormsById, getFormSubmision, getFormSubmisionById, getUser
 import { createOrUpdateContactInHubSpot, createOrUpdateCompanyInHubSpot, 
     createOrUpdateGestionVisitaInHubSpot, associateGestionVisitaWithContact, 
     associateGestionVisitaWithCompany, createOrUpdateCompanyProspectoInHubSpot} from './api/hubspot.js';
-import {getFirstAndLastDateOfCurrentMonth, logWithTimestamp, logErrorWithTimestamp, getCompanyName, getDay} from './utils/util.js';
+import {getFirstAndLastDateOfCurrentMonth, logWithTimestamp, logErrorWithTimestamp, getCompanyName, getDay,getDayAndPrevious} from './utils/util.js';
 (async()=> {
-    
+    //hacer que corra a 12 pm y 6 pm
 try{
     //const { firstDate, lastDate } = getFirstAndLastDateOfCurrentMonth();
     /*
-    const firstDate = "2024-02-16T00:00:00.000Z";
-    const lastDate = "2024-02-20T23:59:59.999Z";
+    const firstDate = "2025-02-07T00:00:00.000Z";
+    const lastDate = "2025-02-10T23:59:59.999Z";
     */
 
-    const date = getDay();
-    const firstDate = `${date}T00:00:00.000Z`;
-    const lastDate = `${date}T23:59:59.999Z`;
+    const { today, previousDay } = getDayAndPrevious();
+
+    
+    const firstDate = `${previousDay}T00:00:00.000Z`;
+    const lastDate = `${today}T23:59:59.999Z`;
     
     console.log('First Date:', firstDate);
     console.log('Last Date:', lastDate);
