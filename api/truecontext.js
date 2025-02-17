@@ -51,7 +51,7 @@ export const getFormsById = async (formid) => {
 
 export const getFormSubmision = async (formSpaceId,start,end) => {
 
-    let page = 1; // Empezar en la primera página
+    let page = 0; // Empezar en la primera página
     let totalPages = 1; // Inicializamos con un valor ficticio
     const results = []; // Donde almacenaremos todos los datos
 
@@ -70,7 +70,7 @@ export const getFormSubmision = async (formSpaceId,start,end) => {
                     fsids: formSpaceId, // FormSpaceId como parámetro
                     stime: start, // Fecha de inicio
                     etime: end,   // Fecha de fin
-                    page: page,   // Página actual
+                    p: page,   // Página actual
                 },
             });
 

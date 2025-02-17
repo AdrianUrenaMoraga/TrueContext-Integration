@@ -8,17 +8,16 @@ import {getFirstAndLastDateOfCurrentMonth, logWithTimestamp, logErrorWithTimesta
     //hacer que corra a 12 pm y 6 pm
 try{
     //const { firstDate, lastDate } = getFirstAndLastDateOfCurrentMonth();
-    /*
-    const firstDate = "2025-02-07T00:00:00.000Z";
-    const lastDate = "2025-02-10T23:59:59.999Z";
-    */
-
+    
+    const firstDate = "2025-02-11T00:00:00.000Z";
+    const lastDate = "2025-02-11T23:59:59.999Z";
+    
     const { today, previousDay } = getDayAndPrevious();
 
-    
+    /*
     const firstDate = `${previousDay}T00:00:00.000Z`;
     const lastDate = `${today}T23:59:59.999Z`;
-    
+    */
     console.log('First Date:', firstDate);
     console.log('Last Date:', lastDate);
     
